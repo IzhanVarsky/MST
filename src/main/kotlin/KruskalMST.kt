@@ -1,4 +1,5 @@
 import java.util.*
+import kotlin.math.sqrt
 
 //fun main() {
 //    val sc = Scanner(System.`in`)
@@ -15,11 +16,13 @@ import java.util.*
 //    println(res)
 //}
 
+fun readLineOfInts() = readLine()!!.split(" ").map(String::toInt)
+
 fun main() {
-    val (n, m) = readLine()!!.split(" ").map(String::toInt)
-    val graph = Graph(n)
+    val (n, m) = readLineOfInts()
+    val graph = Graph<Int>(n)
     for (i in 0 until m) {
-        val (a, b, w) = readLine()!!.split(" ").map(String::toInt)
+        val (a, b, w) = readLineOfInts()
         graph.edges += Graph.Edge(a - 1, b - 1, w)
     }
     val res = KruskalMST(graph).solve()
@@ -29,10 +32,24 @@ fun main() {
 class DSU(private val parent: IntArray, private val rank: IntArray) {
     constructor(n: Int) : this(IntArray(n) { it }, IntArray(n))
 
-    fun findSet(v: Int): Int =
+    fun findSet(v: Int): Int = naiveFindSet(v)
+
+    private fun naiveFindSet(v: Int) = if (v == parent[v]) v else findSet(parent[v])
+
+    private fun findSetWithPathCompression(v: Int) =
         if (v == parent[v]) v else findSet(parent[v]).also { parent[v] = it }
 
-    fun unionSets(x: Int, y: Int) {
+    fun unionSets(x: Int, y: Int) = naiveUnionSets(x, y)
+
+    private fun naiveUnionSets(x: Int, y: Int) {
+        val a = findSet(x)
+        val b = findSet(y)
+        if (a != b) {
+            parent[b] = a
+        }
+    }
+
+    private fun unionSetsWithRanking(x: Int, y: Int) {
         var a = findSet(x)
         var b = findSet(y)
         if (a != b) {
@@ -47,13 +64,13 @@ class DSU(private val parent: IntArray, private val rank: IntArray) {
     }
 }
 
-class Graph(val vertex_count: Int) {
-    val edges = mutableListOf<Edge>()
+class Graph<T>(val vertex_count: Int) {
+    val edges = mutableListOf<Edge<T>>()
 
-    data class Edge(val a: Int, val b: Int, val w: Int)
+    data class Edge<T>(val a: Int, val b: Int, val w: T)
 }
 
-class KruskalMST(private val graph: Graph) {
+class KruskalMST(private val graph: Graph<Int>) {
     fun solve(): Long {
         graph.edges.sortBy { it.w }
         var ans: Long = 0
